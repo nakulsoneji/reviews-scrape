@@ -689,6 +689,7 @@ name = "reviews-scrape"
 version = "0.1.0"
 dependencies = [
  "thirtyfour",
+ "tokio",
 ]
 
 [[package]]

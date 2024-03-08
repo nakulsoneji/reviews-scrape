@@ -1,16 +1,14 @@
+use review_scrape::driver;
+use review_scrape::scrape;
 use thirtyfour::prelude::*;
-
-async fn initialize_driver() -> WebDriverResult<()> {
-    let caps = DesiredCapabilities::chrome();
-    let driver = WebDriver::new("http://localhost:9515", caps).await?;
-    driver.maximize_window().await?;
-    driver.goto("https://www.google.com").await?;
-
-    Ok(())
-}
 
 #[tokio::main]
 async fn main() -> WebDriverResult<()> {
-    initialize_driver().await?;
+    let driver = driver::initialize_driver().await?;
+    driver
+        .goto("https://en.wikipedia.org/wiki/Ponzi_scheme")
+        .await?;
+    scrape::Review::new(driver, Some("reference".to_owned()), None, None).await?;
+
     Ok(())
 }

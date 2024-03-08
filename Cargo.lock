@@ -689,6 +689,7 @@ name = "review_scrape"
 version = "0.1.0"
 dependencies = [
  "thirtyfour",
+ "thirtyfour-macros",
  "tokio",
 ]
 

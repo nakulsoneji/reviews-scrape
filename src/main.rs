@@ -5,10 +5,14 @@ use thirtyfour::prelude::*;
 #[tokio::main]
 async fn main() -> WebDriverResult<()> {
     let driver = driver::initialize_driver().await?;
-    driver
-        .goto("https://en.wikipedia.org/wiki/Ponzi_scheme")
-        .await?;
-    scrape::Review::new(driver, Some("reference".to_owned()), None, None).await?;
+    let reviews = scrape::ReviewCollection::from_amazon(
+        &driver,
+        "https://www.amazon.com/All-new-Echo-Show-5/product-reviews/B09B2SBHQK".to_owned(),
+    )
+    .await?;
 
+    reviews.print();
+
+    driver.quit().await?;
     Ok(())
 }

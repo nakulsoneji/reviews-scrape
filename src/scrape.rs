@@ -1,8 +1,11 @@
+use serde::{Deserialize, Serialize};
+use std::fs::File;
 use thirtyfour::{components::ElementResolver, prelude::*};
 use thirtyfour_macros::*;
 
 const MAX_PAGES: i32 = 10;
 
+#[derive(Serialize, Deserialize)]
 pub struct Review {
     author: String,
     title: String,
@@ -11,6 +14,7 @@ pub struct Review {
 
 pub struct ReviewCollection {
     reviews: Vec<Review>,
+    link: String,
 }
 
 #[derive(Debug, Clone, Component)]
@@ -31,11 +35,8 @@ pub struct AmazonReview {
 }
 
 impl ReviewCollection {
-    pub async fn from_amazon(
-        driver: &WebDriver,
-        site: String,
-    ) -> WebDriverResult<ReviewCollection> {
-        driver.goto(site.as_str()).await?;
+    pub async fn from_amazon(driver: &WebDriver, link: String) -> anyhow::Result<ReviewCollection> {
+        driver.goto(link.as_str()).await?;
 
         let count_elem = driver
             .find(By::XPath(
@@ -62,17 +63,18 @@ impl ReviewCollection {
         for i in 0..total_pages {
             if i != 0 {
                 driver
-                    .goto(format!("{}?pageNumber={}", site, i + 1))
+                    .goto(format!("{}?pageNumber={}", link, i + 1))
                     .await?;
             }
             let elems = driver.find_all(By::ClassName("review")).await?;
             for e in elems {
-                let review = Review::from(AmazonReview::from(e)).await?;
+                let mut review = Review::from(AmazonReview::from(e)).await?;
+                review.content = review.content.replace('\n', "");
                 reviews.push(review);
             }
         }
 
-        Ok(ReviewCollection { reviews })
+        Ok(ReviewCollection { reviews, link })
     }
     pub fn print(&self) {
         let mut i = 1;
@@ -84,10 +86,20 @@ impl ReviewCollection {
             i += 1;
         }
     }
+    pub fn write_csv(&self, file_path: &str) -> anyhow::Result<()> {
+        let _ = File::create(file_path)?;
+
+        let mut wtr = csv::Writer::from_path(file_path)?;
+
+        for review in self.reviews.iter() {
+            wtr.serialize(review)?;
+        }
+        Ok(())
+    }
 }
 
 impl Review {
-    pub async fn from(review: AmazonReview) -> WebDriverResult<Review> {
+    pub async fn from(review: AmazonReview) -> anyhow::Result<Review> {
         Ok(Review {
             title: review.title.resolve().await?.text().await?,
             author: review.author.resolve().await?.text().await?,

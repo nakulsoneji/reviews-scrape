@@ -14,7 +14,6 @@ pub struct Review {
 
 pub struct ReviewCollection {
     reviews: Vec<Review>,
-    link: String,
 }
 
 #[derive(Debug, Clone, Component)]
@@ -74,7 +73,7 @@ impl ReviewCollection {
             }
         }
 
-        Ok(ReviewCollection { reviews, link })
+        Ok(ReviewCollection { reviews })
     }
     pub fn print(&self) {
         let mut i = 1;

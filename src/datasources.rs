@@ -3,15 +3,15 @@ use thirtyfour::WebDriver;
 use tokio::task::JoinSet;
 
 pub async fn load(driver: &WebDriver) -> anyhow::Result<()> {
-    let source_file = std::fs::read_to_string("./datasources/datasources.txt")?;
     std::fs::remove_dir_all("./result")?;
     std::fs::create_dir("./result")?;
+
+    let source_file = std::fs::read_to_string("./datasources/datasources.txt")?;
     let links = source_file
         .split('\n')
         .map(|s| s.to_owned())
         .filter(|s| !s.is_empty())
         .collect::<Vec<String>>();
-
     let mut link_threads = JoinSet::new();
 
     for link in links {
@@ -30,11 +30,9 @@ pub async fn load(driver: &WebDriver) -> anyhow::Result<()> {
         .clone();
 
         link_threads.spawn(async move {
-            println!("{}", id);
             reviews
                 .write_csv(format!("./result/result_{}.csv", id).as_str())
                 .expect("error writing csv");
-            println!("{}", id);
         });
     }
 
